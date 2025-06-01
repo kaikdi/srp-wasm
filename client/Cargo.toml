@@ -1,0 +1,12 @@
+[package]
+name = "client"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+blake2 = "0.10.6"
+num-bigint = "0.4.6"
+wasm-bindgen = "0.2.100"

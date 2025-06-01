@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ES2024",
+    "module": "ESNext",
+    "declaration": true,
+    "declarationDir": "dist/types",
+    "outDir": "dist",
+    "strict": true,
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "skipLibCheck": true,
+    "sourceMap": false,
+    "baseUrl": "..",
+    "paths": {
+      "srp-wasm/client": ["wasm_pkg/dist/client"]
+    }
+  },
+  "include": ["src/**/*"]
+}

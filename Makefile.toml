@@ -1,0 +1,34 @@
+[config]
+default_to_workspace = false
+skip_core_tasks = true
+
+
+[tasks.build-server]
+command = "cargo"
+args = ["build", "-p", "server", "--release"]
+
+[tasks.build-client]
+clear = true
+command = "cargo"
+args = [
+  "build",
+  "-p",
+  "client",
+  "--target",
+  "wasm32-unknown-unknown",
+  "--release",
+]
+
+[tasks.bindgen]
+command = "wasm-bindgen"
+args = [
+  "target/wasm32-unknown-unknown/release/client.wasm",
+  "--out-dir",
+  "wasm_pkg/dist",
+  "--target",
+  "web",
+  "--typescript",
+]
+
+[tasks.default]
+dependencies = ["build-server", "build-client", "bindgen"]

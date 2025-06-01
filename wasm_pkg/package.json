@@ -1,0 +1,19 @@
+{
+  "name": "srp-wasm",
+  "version": "1.0.0",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "kaikdi",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@types/node": "^22.15.29",
+    "esbuild": "^0.25.5",
+    "typescript": "^5.8.3"
+  },
+  "exports": {
+    "./client": "./dist/client.js",
+    "./server": "./dist/server.js"
+  }
+}
