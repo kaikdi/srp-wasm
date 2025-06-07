@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-blake2 = "0.10.6"
 common = { path = "../common" }
 num-bigint = "0.4.6"
+rand = { version = "0.9.1", features = ["os_rng"] }
+subtle = "2.6.1"

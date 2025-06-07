@@ -1,9 +1,16 @@
 #![allow(non_snake_case)]
 
 use blake2::{Blake2b512, Digest};
-use common::{N, SrpError, compute_k, compute_u, g, m1, m2};
+use common::{N, SrpError, compute_K, compute_k, compute_u, g, m1, m2};
 use num_bigint::BigUint;
 use subtle::ConstantTimeEq;
+use wasm_bindgen::prelude::wasm_bindgen;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(js_namespace = crypto)]
+    fn getRandomValues(buf: &mut [u8]);
+}
 
 pub struct SrpClientVerifier {
     S: Vec<u8>,
@@ -13,11 +20,11 @@ pub struct SrpClientVerifier {
 
 impl SrpClientVerifier {
     pub fn session_key(&self) -> &[u8] {
-        return &self.S;
+        &self.S
     }
 
     pub fn client_proof(&self) -> &[u8] {
-        return &self.m1;
+        &self.m1
     }
 
     pub fn verify_server(&self, server_response: &[u8]) -> bool {
@@ -50,7 +57,7 @@ impl SrpClient {
         hasher.update(inner_hash);
         let x_hash = hasher.finalize();
 
-        return BigUint::from_bytes_be(&x_hash);
+        BigUint::from_bytes_be(&x_hash)
     }
 
     /// 2.4. SRP Verifier Creation (RFC 5054)
@@ -60,15 +67,22 @@ impl SrpClient {
     pub fn verifier(&self, salt: &[u8], username: &str, password: &str) -> Vec<u8> {
         let x = self.compute_x(salt, username, password);
 
-        return self.g.modpow(&x, &self.N).to_bytes_be();
+        self.g.modpow(&x, &self.N).to_bytes_be()
+    }
+
+    /// Client's private value a = random()
+    pub fn generate_a(&self) -> [u8; 32] {
+        let mut a = [0u8; 32];
+        getRandomValues(&mut a);
+
+        a
     }
 
     /// Client's public value A = g^a % N
-    fn compute_A(&self, a: &[u8]) -> Vec<u8> {
-        return self
-            .g
+    pub fn compute_A(&self, a: &[u8]) -> Vec<u8> {
+        self.g
             .modpow(&BigUint::from_bytes_be(a), &self.N)
-            .to_bytes_be();
+            .to_bytes_be()
     }
 
     /// Premaster secret: S = (B - k * g^x) ^ (a + u * x) mod N
@@ -103,29 +117,21 @@ impl SrpClient {
         let base = (&B_as_big_int + n - base) % n;
         let exp = (u * x) + a_as_big_int;
 
-        return Ok(base.modpow(&exp, n).to_bytes_be());
-    }
-
-    /// Session Key: K = H(S)
-    fn compute_K(&self, premaster_secret: &[u8]) -> Vec<u8> {
-        let mut hasher = Blake2b512::new();
-        hasher.update(premaster_secret);
-
-        return hasher.finalize().to_vec();
+        Ok(base.modpow(&exp, n).to_bytes_be())
     }
 
     pub fn srp_client_verifier(
         &self,
         a: &[u8],
+        A: &[u8],
         B: &[u8],
         salt: &[u8],
         username: &str,
         password: &str,
     ) -> Result<SrpClientVerifier, SrpError> {
-        let A = self.compute_A(a);
         let S = self.compute_S(a, &A, B, salt, username, password)?;
-        let K = self.compute_K(&S);
-        let m1 = m1(a, B, &K)?;
+        let K = compute_K(&S);
+        let m1 = m1(a, B, &K, username, salt)?;
         let m2 = m2(&A, &m1, &S);
 
         Ok(SrpClientVerifier { S, m1, m2 })

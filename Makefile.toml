@@ -2,7 +2,6 @@
 default_to_workspace = false
 skip_core_tasks = true
 
-
 [tasks.build-server]
 command = "cargo"
 args = ["build", "-p", "server", "--release"]
