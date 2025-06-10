@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SRP Demo</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        max-width: 400px;
+        margin: 0 auto;
+      }
+
+      #log {
+        white-space: pre-wrap;
+        background: #eee;
+        border-radius: 4px;
+        min-height: 150px;
+      }
+
+      .flex-container {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="flex-container">
+      <h2>SRP Register</h2>
+      <input id="reg-username" placeholder="Username" />
+      <input id="reg-password" type="password" placeholder="Password" />
+      <button id="btn-register">Register</button>
+    </div>
+
+    <div class="flex-container">
+      <h2>SRP Login</h2>
+      <input id="login-username" placeholder="Username" />
+      <input id="login-password" type="password" placeholder="Password" />
+      <button id="btn-login">Login</button>
+    </div>
+
+    <h3>Log:</h3>
+    <div id="log"></div>
+
+    <script type="module" src="./client.js"></script>
+  </body>
+</html>
