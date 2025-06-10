@@ -1,5 +1,7 @@
-import init from "srp-wasm/client";
+import init, { SrpClient } from "srp-wasm/client";
 
-export async function initClient() {
+export async function createSrpClient() {
   await init();
+
+  return new SrpClient();
 }

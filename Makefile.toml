@@ -2,9 +2,8 @@
 default_to_workspace = false
 skip_core_tasks = true
 
-[tasks.build-server]
-command = "cargo"
-args = ["build", "-p", "server", "--release"]
+[tasks.clean-dist]
+script = ["echo Cleaning wasm_pkg/dist...", "rm -rf wasm_pkg/dist"]
 
 [tasks.build-client]
 clear = true
@@ -18,16 +17,78 @@ args = [
   "--release",
 ]
 
-[tasks.bindgen]
+
+[tasks.bindgen-client]
+clear = true
 command = "wasm-bindgen"
 args = [
   "target/wasm32-unknown-unknown/release/client.wasm",
   "--out-dir",
-  "wasm_pkg/dist",
+  "wasm_pkg/dist/client",
+  "--out-name",
+  "index",
   "--target",
   "web",
   "--typescript",
 ]
 
+[tasks.optimize-client]
+clear = true
+command = "wasm-opt"
+args = [
+  "-Oz",
+  "--strip-debug",
+  "--strip-producers",
+  "-o",
+  "wasm_pkg/dist/client/index_bg.wasm",
+  "wasm_pkg/dist/client/index_bg.wasm",
+]
+
+[tasks.build-server]
+clear = true
+command = "cargo"
+args = [
+  "build",
+  "-p",
+  "server",
+  "--target",
+  "wasm32-unknown-unknown",
+  "--release",
+]
+
+[tasks.bindgen-server]
+clear = true
+command = "wasm-bindgen"
+args = [
+  "target/wasm32-unknown-unknown/release/server.wasm",
+  "--out-dir",
+  "wasm_pkg/dist/server",
+  "--out-name",
+  "index",
+  "--target",
+  "bundler",
+  "--typescript",
+]
+
+[tasks.optimize-server]
+clear = true
+command = "wasm-opt"
+args = [
+  "-Oz",
+  "--strip-debug",
+  "--strip-producers",
+  "-o",
+  "wasm_pkg/dist/server/index_bg.wasm",
+  "wasm_pkg/dist/server/index_bg.wasm",
+]
+
 [tasks.default]
-dependencies = ["build-server", "build-client", "bindgen"]
+dependencies = [
+  "clean-dist",
+  "build-client",
+  "bindgen-client",
+  "optimize-client",
+  "build-server",
+  "bindgen-server",
+  "optimize-server",
+]

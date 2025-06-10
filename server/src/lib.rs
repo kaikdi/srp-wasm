@@ -1,23 +1,28 @@
 #![allow(non_snake_case)]
 
-use common::{N, SrpError, compute_K, compute_k, compute_u, g, m1, m2};
-use num_bigint::BigUint;
-use rand::{TryRngCore, rngs::OsRng};
-use subtle::ConstantTimeEq;
+#[global_allocator]
+static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
+use common::{N, compute_K, compute_k, compute_u, g, getRandomValues, m1, m2};
+use num_bigint::BigUint;
+use subtle::ConstantTimeEq;
+use wasm_bindgen::{JsError, prelude::wasm_bindgen};
+
+#[wasm_bindgen]
 pub struct SrpServerVerifier {
-    pub S: Vec<u8>,
-    pub m1: Vec<u8>,
-    pub m2: Vec<u8>,
+    S: Vec<u8>,
+    m1: Vec<u8>,
+    m2: Vec<u8>,
 }
 
+#[wasm_bindgen]
 impl SrpServerVerifier {
-    pub fn session_key(&self) -> &[u8] {
-        &self.S
+    pub fn session_key(&self) -> Vec<u8> {
+        self.S.clone()
     }
 
-    pub fn server_proof(&self) -> &[u8] {
-        &self.m2
+    pub fn server_proof(&self) -> Vec<u8> {
+        self.m2.clone()
     }
 
     pub fn verify_client(&self, client_response: &[u8]) -> bool {
@@ -25,12 +30,15 @@ impl SrpServerVerifier {
     }
 }
 
+#[wasm_bindgen]
 pub struct SrpServer {
     N: BigUint,
     g: BigUint,
 }
 
+#[wasm_bindgen]
 impl SrpServer {
+    #[wasm_bindgen(constructor)]
     pub fn new() -> Self {
         Self {
             N: BigUint::parse_bytes(&N.as_bytes(), 16).expect("Failed to create N."),
@@ -39,13 +47,11 @@ impl SrpServer {
     }
 
     /// Client's private value a = random()
-    pub fn generate_b(&self) -> Result<Vec<u8>, SrpError> {
-        let mut b = [0u8; 32];
-        let mut rng = OsRng;
-        match rng.try_fill_bytes(&mut b) {
-            Ok(_) => Ok(b.to_vec()),
-            Err(_) => Err(SrpError::IllegalParameter),
-        }
+    pub fn generate_b(&self) -> Vec<u8> {
+        let mut a = [0u8; 32];
+        getRandomValues(&mut a);
+
+        a.to_vec()
     }
 
     /// Client's public value B = k*v + g^b % N
@@ -74,15 +80,18 @@ impl SrpServer {
         A: &[u8],
         b: &[u8],
         B: &[u8],
+        v: &[u8],
         salt: &[u8],
         username: &str,
-    ) -> Result<SrpServerVerifier, SrpError> {
-        let S = self.compute_S(A, &b, B);
+    ) -> Result<SrpServerVerifier, JsError> {
+        let S = self.compute_S(A, &b, v);
         let K = compute_K(&S);
-        let m1 = m1(A, B, &K, username, salt)?;
+        let m1 = match m1(A, B, &K, username, salt) {
+            Ok(m1) => m1,
+            Err(e) => return Err(JsError::new(e.as_str())),
+        };
         let m2 = m2(&A, &m1, &S);
 
         Ok(SrpServerVerifier { S, m1, m2 })
     }
 }
-

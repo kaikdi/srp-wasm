@@ -10,5 +10,5 @@ await esbuild.build({
   sourcemap: false,
   target: ["es2024"],
   platform: "neutral",
-  external: [],
+  external: ["srp-wasm/client", "srp-wasm/server"],
 });

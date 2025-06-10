@@ -12,7 +12,8 @@
     "sourceMap": false,
     "baseUrl": "..",
     "paths": {
-      "srp-wasm/client": ["wasm_pkg/dist/client"]
+      "srp-wasm/client": ["wasm_pkg/dist/client"],
+      "srp-wasm/server": ["wasm_pkg/dist/server"]
     }
   },
   "include": ["src/**/*"]

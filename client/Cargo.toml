@@ -12,6 +12,7 @@ common = { path = "../common" }
 num-bigint = "0.4.6"
 subtle = "2.6.1"
 wasm-bindgen = "0.2.100"
+wee_alloc = "0.4.5"
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.50"

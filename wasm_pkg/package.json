@@ -1,9 +1,8 @@
 {
   "name": "srp-wasm",
   "version": "1.0.0",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "type": "module",
+  "scripts": {},
   "author": "kaikdi",
   "license": "ISC",
   "description": "",
@@ -13,7 +12,7 @@
     "typescript": "^5.8.3"
   },
   "exports": {
-    "./client": "./dist/client.js",
-    "./server": "./dist/server.js"
+    "./client": "./dist/client/index.js",
+    "./server": "./dist/server/index.js"
   }
 }

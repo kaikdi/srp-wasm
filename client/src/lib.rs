@@ -1,30 +1,29 @@
 #![allow(non_snake_case)]
 
+#[global_allocator]
+static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
+
 use blake2::{Blake2b512, Digest};
-use common::{N, SrpError, compute_K, compute_k, compute_u, g, m1, m2};
+use common::{N, SrpError, compute_K, compute_k, compute_u, g, getRandomValues, m1, m2};
 use num_bigint::BigUint;
 use subtle::ConstantTimeEq;
-use wasm_bindgen::prelude::wasm_bindgen;
+use wasm_bindgen::{JsError, prelude::wasm_bindgen};
 
 #[wasm_bindgen]
-extern "C" {
-    #[wasm_bindgen(js_namespace = crypto)]
-    fn getRandomValues(buf: &mut [u8]);
-}
-
 pub struct SrpClientVerifier {
     S: Vec<u8>,
     m1: Vec<u8>,
     m2: Vec<u8>,
 }
 
+#[wasm_bindgen]
 impl SrpClientVerifier {
-    pub fn session_key(&self) -> &[u8] {
-        &self.S
+    pub fn session_key(&self) -> Vec<u8> {
+        self.S.clone()
     }
 
-    pub fn client_proof(&self) -> &[u8] {
-        &self.m1
+    pub fn client_proof(&self) -> Vec<u8> {
+        self.m1.clone()
     }
 
     pub fn verify_server(&self, server_response: &[u8]) -> bool {
@@ -32,12 +31,15 @@ impl SrpClientVerifier {
     }
 }
 
+#[wasm_bindgen]
 pub struct SrpClient {
     N: BigUint,
     g: BigUint,
 }
 
+#[wasm_bindgen]
 impl SrpClient {
+    #[wasm_bindgen(constructor)]
     pub fn new() -> Self {
         Self {
             N: BigUint::parse_bytes(&N.as_bytes(), 16).expect("Failed to create N."),
@@ -71,11 +73,11 @@ impl SrpClient {
     }
 
     /// Client's private value a = random()
-    pub fn generate_a(&self) -> [u8; 32] {
+    pub fn generate_a(&self) -> Vec<u8> {
         let mut a = [0u8; 32];
         getRandomValues(&mut a);
 
-        a
+        a.to_vec()
     }
 
     /// Client's public value A = g^a % N
@@ -94,7 +96,7 @@ impl SrpClient {
         salt: &[u8],
         username: &str,
         password: &str,
-    ) -> Result<Vec<u8>, SrpError> {
+    ) -> Result<Vec<u8>, JsError> {
         let a_as_big_int = BigUint::from_bytes_be(a);
         let B_as_big_int = BigUint::from_bytes_be(B);
         let n = &self.N;
@@ -104,7 +106,7 @@ impl SrpClient {
         // The server MUST abort the handshake with an "illegal_parameter" alert if A % N = 0.
         // Reference: https://datatracker.ietf.org/doc/html/rfc5054#section-2.5.4
         if &B_as_big_int % n == BigUint::default() {
-            return Err(SrpError::IllegalParameter);
+            return Err(JsError::new(SrpError::IllegalParameter.as_str()));
         }
 
         let u = compute_u(&A, B);
@@ -128,10 +130,13 @@ impl SrpClient {
         salt: &[u8],
         username: &str,
         password: &str,
-    ) -> Result<SrpClientVerifier, SrpError> {
+    ) -> Result<SrpClientVerifier, JsError> {
         let S = self.compute_S(a, &A, B, salt, username, password)?;
         let K = compute_K(&S);
-        let m1 = m1(a, B, &K, username, salt)?;
+        let m1 = match m1(A, B, &K, username, salt) {
+            Ok(m1) => m1,
+            Err(e) => return Err(JsError::new(e.as_str())),
+        };
         let m2 = m2(&A, &m1, &S);
 
         Ok(SrpClientVerifier { S, m1, m2 })
