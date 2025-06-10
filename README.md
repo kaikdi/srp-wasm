@@ -1,16 +1,17 @@
-# Install Rust toolchain
+# SRP-WASM
 
-curl --proto '=https' --tlsv1.2 -sSf <https://sh.rustup.rs> | sh
-rustup update stable
+A secure [Secure Remote Password (SRP-6a)](https://en.wikipedia.org/wiki/Secure_Remote_Password_protocol) library written in Rust and compiled to WebAssembly, usable in both browser and Node.js environments.
 
-# Add WASM target for Rust
+## Features
 
-rustup target add wasm32-unknown-unknown
+- SRP-6a protocol implementation in Rust
+- WebAssembly target for high performance and portability
+- Client and server bindings for both browser and Node.js
+- Safe password-authenticated key exchange
+- No plaintext password transmission
 
-# Install wasm-bindgen CLI
+## Use Cases
 
-cargo install wasm-bindgen-cli
-
-# Install cargo-make for task running
-
-cargo install cargo-make
+- Secure login system without exposing passwords
+- Replace password-based auth in web apps with strong cryptographic exchange
+- Works seamlessly with WebAssembly in modern frontend or backend apps
