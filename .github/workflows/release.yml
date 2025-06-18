@@ -1,0 +1,56 @@
+name: Build and Publish WASM
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to publish"
+        required: true
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Add wasm32 target
+        run: rustup target add wasm32-unknown-unknown
+
+      - name: Install wasm-bindgen-cli
+        run: cargo install wasm-bindgen-cli
+
+      - name: Install Binaryen (wasm-opt)
+        run: |
+          sudo apt update
+          sudo apt install -y binaryen
+
+      - name: Install cargo-make
+        run: cargo install cargo-make
+
+      - name: Build WASM
+        run: cargo make
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org/
+
+      - name: Authenticate GitHub CLI
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+
+      - name: Create GitHub Release
+        run: gh release create "${{ github.event.inputs.tag }}" --generate-notes
+
+      - name: Publish to npm
+        run: npm publish --access public --tag ${{ github.event.inputs.tag }}
+        working-directory: ./wasm_pkg
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
