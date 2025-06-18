@@ -23,6 +23,11 @@ jobs:
       - name: Install wasm-bindgen-cli
         run: cargo install wasm-bindgen-cli
 
+      - name: Install Binaryen (wasm-opt)
+        run: |
+          sudo apt update
+          sudo apt install -y binaryen
+
       - name: Install cargo-make
         run: cargo install cargo-make
 
