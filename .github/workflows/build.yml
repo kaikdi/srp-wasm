@@ -1,0 +1,30 @@
+name: Build WASM
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Install cargo-make
+        run: cargo install cargo-make
+
+      - name: Build WASM
+        run: cargo make
+
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: wasm-dist
+          path: wasm-pkg/dist/
